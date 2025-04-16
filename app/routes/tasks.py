@@ -1,67 +1,88 @@
 # app/routes/tasks.py
 
-from flask import Blueprint, jsonify, request
-from app.models.task_model import get_all_tasks, get_task, create_task, update_task
+from flask import jsonify, request, Blueprint
+from app.models.task_model import Task
+from app import db
 
-tasks_bp = Blueprint("tasks", __name__)
+tasks_bp = Blueprint("tasks",__name__)
 
-@tasks_bp.route("/api/tasks", methods=["GET"])
-def get_tasks():
-    return jsonify(get_all_tasks())
+@tasks_bp.route("/api/tasks",methods=["GET"])
+def all_tasks():
+    tasks = Task.query.all()
+    all_tasks = []
+    for task in tasks:
+        dict_task = task.to_dict()
+        all_tasks.append(dict_task)
+    return jsonify(all_tasks)
 
-@tasks_bp.route("/api/tasks/<int:task_id>", methods=["GET"])
-def get_task_by_id(task_id):
-    task = get_task(task_id)
-    if task:
-        return jsonify(task)
-    return jsonify({"error": "Task not found"}), 404
+@tasks_bp.route("/api/tasks/<int:task_id>",methods=["GET"])
+def get_task(task_id):
+    task = Task.query.get(task_id)
+    if not task:
+        return jsonify({"error":"task doenot exist"}),404
+    return jsonify(task.to_dict())
 
-@tasks_bp.route("/api/tasks", methods=["POST"])
-def post_task():
-    new_task = request.get_json()
-    if not new_task:
-        return jsonify({"error": "Enter Task"}), 400
+@tasks_bp.route("/api/tasks",methods=["POST"])
+def create_task():
+    data = request.get_json()
+    if not data:
+        return jsonify({"error":"task doesnot exist"}),404
+    name = data.get("name")
+    description = data.get("description")
+    status = data.get("status")
 
-    name = new_task.get("name")
-    description = new_task.get("description")
-    status = new_task.get("status")
+    if not name or type(name)!=str  or name.strip()=="":
+        return jsonify({"error":"name should be there for task"}),400
+    
+    if not description or len(description) < 9 or description.strip =="":
+        return jsonify({"error":"description must be greater than 10 chars for task"}),400
+    
+    if status not in("pending","done"):
+        return jsonify({"error":"if you enter status it must be pending or done"}),400
+    
+    new_task = Task(name = name, description = description, status = status)
+    db.session.add(new_task)
+    db.session.commit()
 
-    if not name or type(name) != str or name.strip() == "":
-        return jsonify({"error": "name is not a string"}), 400
-    if not description or len(description) < 10:
-        return jsonify({"error": "description error"}), 400
-    if status and status not in ("pending", "done"):
-        return jsonify({"error": "status must be pending or done"}), 400
+    return jsonify({"success":"task added ", "new task":new_task.to_dict()}),201
 
-    task = {
-        "name": name,
-        "description": description,
-        "status": status or "pending"
-    }
+@tasks_bp.route("/api/tasks/<int:task_id>",methods=["PUT"])
+def update_task(task_id):
+    task = Task.query.get(task_id)
+    if not task:
+        return jsonify({"error":"task not found"}),404
+    
+    data = request.get_json()
+    if not data:
+        return jsonify({"error":"no data entered"}),404
+    
+    name = data.get("name")
+    description = data.get("description")
+    status = data.get("status")
+    
+    if name:
+        if type(name)!=str or name.strip() == "":
+            return jsonify({"error":"enter proper name"}),400
+        task.name = name
 
-    created = create_task(task)
-    return jsonify({"success": "task added", "task": created}), 201
+    if description:
+        if description.strip() == "" or len(description)<10:
+            return jsonify({"error":"description must be greater than 10 chars for task"}),400
+        task.description = description
+    if status:
+        if status not in ("pending","done"):
+            return jsonify({"error":"if you enter status it must be pending or done"}),400
+        task.status = status
+    
+    db.session.commit()
+    return jsonify({"success":"your task modified successfully","task":task.to_dict()}),201
 
-@tasks_bp.route("/api/tasks/<int:task_id>", methods=["PUT"])
-def put_task(task_id):
-    existing_task = get_task(task_id)
-    if not existing_task:
-        return jsonify({"error": "Task not found"}), 404
 
-    updated_data = request.get_json()
-    if not updated_data:
-        return jsonify({"error": "enter data"}), 400
-
-    name = updated_data.get("name")
-    description = updated_data.get("description")
-    status = updated_data.get("status")
-
-    if name and (type(name) != str or name.strip() == ""):
-        return jsonify({"error": "name is not a string"}), 400
-    if description and (type(description) != str or len(description) < 10):
-        return jsonify({"error": "description error"}), 400
-    if status and status not in ("pending", "done"):
-        return jsonify({"error": "status must be pending or done"}), 400
-
-    updated_task = update_task(task_id, updated_data)
-    return jsonify({"success": "task updated", "task": updated_task})
+@tasks_bp.route("/api/tasks/<int:task_id>",methods=["DELETE"])
+def delete_task(task_id):
+    task = Task.query.get(task_id)
+    if not task:
+        return jsonify({"error":"task not found"}),404
+    db.session.delete(task)
+    db.session.commit()
+    return jsonify({"success":"task deleted","task":task.to_dict()}),201
