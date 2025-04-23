@@ -1,1 +1,5 @@
 Flask
+Flask-SQLAlchemy
+PyMySQL
+Flask-CORS
+cryptography
