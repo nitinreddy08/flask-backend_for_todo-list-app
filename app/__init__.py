@@ -10,7 +10,7 @@ def create_app():
     
     # Use environment variable for database URI
     app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv(
-        'DATABASE_URL', 'mysql+pymysql://root:123456@localhost:3306/todo_db'
+        'DATABASE_URL', 'mysql+pymysql://root:123456@192.168.1.53:3306/todo_db'
     )
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
