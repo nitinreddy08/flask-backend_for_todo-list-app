@@ -8,10 +8,14 @@ db = SQLAlchemy()
 def create_app():
     app = Flask(__name__)
     
-    # Use environment variable for database URI
-    app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv(
-        'DATABASE_URL', 'mysql+pymysql://root:123456@192.168.1.53:3306/todo_db'
+
+    app.config['SQLALCHEMY_DATABASE_URI'] = (
+        'mysql+pymysql://nitinreddy118:%40%2198qM%2B7FivsKjt'
+        '@nitinreddy118.mysql.pythonanywhere-services.com/nitinreddy118$default'
     )
+
+
+    
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
     db.init_app(app)
