@@ -1,5 +1,3 @@
-# app/routes/tasks.py
-
 from flask import jsonify, request, Blueprint
 from app.models.task_model import Task
 from app import db
