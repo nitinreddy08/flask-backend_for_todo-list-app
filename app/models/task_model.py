@@ -7,13 +7,15 @@ class Task(db.Model):
     name = db.Column(db.String(50), nullable = False )
     description = db.Column(db.String(150), nullable=False )
     status = db.Column(db.String(20), nullable = False, default="Pending")
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
 
     def to_dict(self):
         return{
         "id" : self.id,
         "name" : self.name,
         "description" : self.description,
-        "status" : self.status
+        "status" : self.status,
+        "author": self.author.username
         }
 
 
