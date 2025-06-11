@@ -6,21 +6,19 @@ from flask_login import login_required, current_user
 
 tasks_bp = Blueprint("tasks",__name__)
 
-@tasks_bp.route("/")
-def first():
-    return "Hello"
 
-@tasks_bp.route("/api/tasks",methods=["GET"])
+@tasks_bp.route("/tasks",methods=["GET"])
 @login_required
 def all_tasks():
-    tasks = Task.query.all()
+    # BUG FIX: Only query tasks for the currently logged-in user.
+    tasks = Task.query.filter_by(author=current_user).all()
     all_tasks = []
     for task in tasks:
         dict_task = task.to_dict()
         all_tasks.append(dict_task)
     return jsonify(all_tasks)
 
-@tasks_bp.route("/api/tasks/<int:task_id>",methods=["GET"])
+@tasks_bp.route("/tasks/<int:task_id>",methods=["GET"])
 @login_required
 def get_task(task_id):
     task = Task.query.get(task_id)
@@ -28,7 +26,7 @@ def get_task(task_id):
         return jsonify({"error":"task doenot exist"}),404
     return jsonify(task.to_dict())
 
-@tasks_bp.route("/api/tasks",methods=["POST"])
+@tasks_bp.route("/tasks",methods=["POST"])
 @login_required
 def create_task():
     data = request.get_json()
@@ -47,13 +45,14 @@ def create_task():
     if status not in("pending","done"):
         return jsonify({"error":"if you enter status it must be pending or done"}),400
     
-    new_task = Task(name = name, description = description, status = status)
+    # BUG FIX: Assign the new task to the current_user.
+    new_task = Task(name = name, description = description, status = status, author=current_user)
     db.session.add(new_task)
     db.session.commit()
 
     return jsonify({"success":"task added ", "new task":new_task.to_dict()}),201
 
-@tasks_bp.route("/api/tasks/<int:task_id>",methods=["PUT"])
+@tasks_bp.route("/tasks/<int:task_id>",methods=["PUT"])
 @login_required
 def update_task(task_id):
     task = Task.query.get(task_id)
@@ -86,7 +85,7 @@ def update_task(task_id):
     return jsonify({"success":"your task modified successfully","task":task.to_dict()}),201
 
 
-@tasks_bp.route("/api/tasks/<int:task_id>",methods=["DELETE"])
+@tasks_bp.route("/tasks/<int:task_id>",methods=["DELETE"])
 @login_required
 def delete_task(task_id):
     task = Task.query.get(task_id)
