@@ -12,6 +12,10 @@ login_manager = LoginManager()
 def create_app():
     app = Flask(__name__)
     app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'your_secret_key')
+    app.config.update(
+        SESSION_COOKIE_SAMESITE="None",   # allow cookies on cross-site fetch
+        SESSION_COOKIE_SECURE=True        # browsers require this when SameSite=None and you use HTTPS
+    )
 
     # Use DATABASE_URL from environment for production, fallback to local MySQL for dev
     database_url = os.environ.get('DATABASE_URL', 'mysql+pymysql://root:123456@localhost:3306/todo_db')
