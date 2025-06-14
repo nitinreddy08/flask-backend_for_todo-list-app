@@ -1,22 +1,33 @@
 # app/models/task_model.py
 
 from app import db
+from datetime import datetime
 
 class Task(db.Model):
-    id =db.Column(db.Integer, primary_key = True )
-    name = db.Column(db.String(50), nullable = False )
-    description = db.Column(db.String(150), nullable=False )
-    status = db.Column(db.String(20), nullable = False, default="Pending")
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(100), nullable=False)
+    description = db.Column(db.String(500), nullable=False)
+    status = db.Column(db.String(20), nullable=False, default="pending")
+    priority = db.Column(db.String(20), nullable=False, default="medium")
+    created_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow, onupdate=datetime.utcnow)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    author = db.relationship('User', backref=db.backref('tasks', lazy=True))
 
     def to_dict(self):
-        return{
-        "id" : self.id,
-        "name" : self.name,
-        "description" : self.description,
-        "status" : self.status,
-        "author": self.author.username
+        return {
+            "id": self.id,
+            "name": self.name,
+            "description": self.description,
+            "status": self.status,
+            "priority": self.priority,
+            "created_at": self.created_at.isoformat(),
+            "updated_at": self.updated_at.isoformat(),
+            "author": self.author.username
         }
+
+    def __repr__(self):
+        return f'<Task {self.name}>'
 
 
 
